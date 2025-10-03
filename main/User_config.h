@@ -692,7 +692,7 @@ void storeSignalValue(uint64_t);
 #  ifndef BLEDecryptor
 #    define BLEDecryptor true //true if decrypt encrypted PVVX, BTHome v2 or Victron Energy broadcast data
 #    ifndef JSON_BLE_AES_CUSTOM_KEYS
-#      define JSON_BLE_AES_CUSTOM_KEYS 256 // 42 byte BLE Custom Key * 6 rounded up to 256.
+#      define JSON_BLE_AES_CUSTOM_KEYS 512 // 42 byte BLE Custom Key * 6 rounded up to 256.
 #    endif
 #    ifndef BLE_AES
 #      define BLE_AES "00112233445566778899001122334455"
