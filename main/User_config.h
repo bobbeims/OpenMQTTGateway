@@ -174,7 +174,7 @@
 #  define MQTT_PASS "your_password"
 #endif
 #ifndef MQTT_SERVER
-#  define MQTT_SERVER "192.168.1.17"
+#  define MQTT_SERVER "127.0.0.1"
 #endif
 #ifndef MQTT_PORT
 #  define MQTT_PORT "1883"
@@ -346,6 +346,7 @@ extern ss_cnt_parameters cnt_parameters_array[];
 //#define ZgatewaySRFB   "SRFB"     //                          Sonoff RF Bridge
 //#define Zgateway2G     "2G"       //ESP8266, Arduino, ESP32
 //#define ZgatewayRFM69  "RFM69"    //ESP8266, Arduino, ESP32
+#define ZgatewayWU     "WU"       // Weather Underground gateway - ESP32
 //#define ZactuatorONOFF "ONOFF"    //ESP8266, Arduino, ESP32,  Sonoff RF Bridge
 //#define ZsensorINA226  "INA226"   //ESP8266, Arduino, ESP32
 //#define ZsensorHCSR04  "HCSR04"   //ESP8266, Arduino, ESP32

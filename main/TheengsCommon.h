@@ -6,6 +6,8 @@
 #define ARDUINOJSON_ENABLE_STD_STRING 1
 #include <ArduinoJson.h>
 #include <ArduinoLog.h>
+#include <queue>
+#include <string>
 
 #if defined(ESP32)
 #  include <Preferences.h>
@@ -68,8 +70,62 @@ extern char ble_aes[];
 extern StaticJsonDocument<JSON_BLE_AES_CUSTOM_KEYS> ble_aes_keys;
 #endif
 
-extern bool enqueueJsonObject(const StaticJsonDocument<JSON_MSG_BUFFER>& jsonDoc, int timeout);
-extern bool enqueueJsonObject(const StaticJsonDocument<JSON_MSG_BUFFER>& jsonDoc);
+// External queue/state variables (defined in main.cpp)
+extern std::queue<std::string> jsonQueue;
+extern int queueLength;
+extern unsigned long receivedMessages;
+extern unsigned long blockedMessages;
+#ifdef ESP32
+extern SemaphoreHandle_t xQueueMutex;
+#endif
+
+// Enqueue a StaticJsonDocument into the processing queue.
+inline bool enqueueJsonObject(const StaticJsonDocument<JSON_MSG_BUFFER>& jsonDoc, int timeout) {
+  receivedMessages++;
+  if (jsonDoc.size() == 0) {
+    THEENGS_LOG_ERROR(F("Empty JSON, skipping" CR));
+    gatewayState = GatewayState::ERROR;
+    return true;
+  }
+  if (queueLength >= QueueSize) {
+    THEENGS_LOG_WARNING(F("%d Doc(s) in queue, doc blocked" CR), queueLength);
+    blockedMessages++;
+    return false;
+  }
+  THEENGS_LOG_TRACE(F("Enqueue JSON" CR));
+  std::string jsonString;
+  serializeJson(jsonDoc, jsonString);
+#ifdef ESP32
+  if (xSemaphoreTake(xQueueMutex, pdMS_TO_TICKS(timeout)) == pdFALSE) {
+    THEENGS_LOG_ERROR(F("xQueueMutex not taken" CR));
+    gatewayState = GatewayState::ERROR;
+    blockedMessages++;
+    return false;
+  }
+#endif
+  jsonQueue.push(jsonString);
+#ifdef ESP32
+  xSemaphoreGive(xQueueMutex);
+#endif
+  THEENGS_LOG_TRACE(F("Queue length: %d" CR), jsonQueue.size());
+  return true;
+}
+
+inline bool enqueueJsonObject(const StaticJsonDocument<JSON_MSG_BUFFER>& jsonDoc) {
+  return enqueueJsonObject(jsonDoc, QueueSemaphoreTimeOutLoop);
+}
+// Inline overload to accept a JsonObject and forward to the StaticJsonDocument-based enqueue.
+inline bool enqueueJsonObject(const JsonObject& jsonObj) {
+  StaticJsonDocument<JSON_MSG_BUFFER> tmp;
+  std::string jsonString;
+  serializeJson(jsonObj, jsonString);
+  DeserializationError err = deserializeJson(tmp, jsonString);
+  if (err) {
+    THEENGS_LOG_ERROR(F("deserializeJson() failed while forwarding JsonObject: %s" CR), err.c_str());
+    return false;
+  }
+  return enqueueJsonObject(tmp);
+}
 extern void buildTopicFromId(JsonObject& Jsondata, const char* origin);
 extern bool pubMQTT(const char* topic, const char* payload);
 extern bool pubMQTT(const char* topic, const char* payload, bool retainFlag);

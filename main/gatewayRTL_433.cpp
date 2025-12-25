@@ -32,6 +32,10 @@
 #ifdef ZgatewayRTL_433
 #  include <rtl_433_ESP.h>
 
+#ifdef ZgatewayWU
+#  include "config_WU.h"
+#endif
+
 #  include "TheengsCommon.h"
 #  include "config_RF.h"
 #  ifdef ZmqttDiscovery
@@ -304,6 +308,9 @@ void rtl_433_Callback(char* message) {
       storeRTL_433Discovery(RFrtl_433_ESPdata, (char*)model.c_str(), (char*)type.c_str(), (char*)uniqueid.c_str());
 #  endif
     RFrtl_433_ESPdata["origin"] = (char*)topic.c_str();
+#  ifdef ZgatewayWU
+    MQTTtoWU((char*)topic.c_str(), RFrtl_433_ESPdata);
+#  endif
     enqueueJsonObject(RFrtl_433_ESPdata);
     storeSignalValue(MQTTvalue);
   }

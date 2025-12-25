@@ -131,6 +131,9 @@ Preferences preferences;
 #ifdef ZgatewayBT
 #  include "config_BT.h"
 #endif
+#ifdef ZgatewayWU
+#  include "config_WU.h"
+#endif
 #ifdef ZgatewayIR
 #  include "config_IR.h"
 #endif
@@ -438,43 +441,9 @@ bool jsonDispatch(JsonObject& data) {
   return res;
 }
 
-// Add a document to the queue
-bool enqueueJsonObject(const StaticJsonDocument<JSON_MSG_BUFFER>& jsonDoc, int timeout) {
-  receivedMessages++;
-  if (jsonDoc.size() == 0) {
-    THEENGS_LOG_ERROR(F("Empty JSON, skipping" CR));
-    gatewayState = GatewayState::ERROR;
-    return true;
-  }
-  if (queueLength >= QueueSize) {
-    THEENGS_LOG_WARNING(F("%d Doc(s) in queue, doc blocked" CR), queueLength);
-    blockedMessages++;
-    return false;
-  }
-  THEENGS_LOG_TRACE(F("Enqueue JSON" CR));
-  std::string jsonString;
-  serializeJson(jsonDoc, jsonString);
-#ifdef ESP32
-  // Semaphore check before enqueueing a document
-  if (xSemaphoreTake(xQueueMutex, pdMS_TO_TICKS(timeout)) == pdFALSE) {
-    THEENGS_LOG_ERROR(F("xQueueMutex not taken" CR));
-    gatewayState = GatewayState::ERROR;
-    blockedMessages++;
-    return false;
-  }
-#endif
-  jsonQueue.push(jsonString);
-#ifdef ESP32
-  xSemaphoreGive(xQueueMutex);
-#endif
-  THEENGS_LOG_TRACE(F("Queue length: %d" CR), jsonQueue.size());
-  return true;
-}
+// `enqueueJsonObject` implementations are provided inline in TheengsCommon.h
 
-// Semaphore check before enqueueing a document with default timeout QueueSemaphoreTimeOutLoop
-bool enqueueJsonObject(const StaticJsonDocument<JSON_MSG_BUFFER>& jsonDoc) {
-  return enqueueJsonObject(jsonDoc, QueueSemaphoreTimeOutLoop);
-}
+// JsonObject overload is now provided inline in TheengsCommon.h
 
 #ifdef ESP32
 #  include "mbedtls/sha256.h"
@@ -1609,6 +1578,9 @@ void setup() {
 #endif
 #ifdef ZgatewayRTL_433
   setupRTL_433();
+#ifdef ZgatewayWU
+  setupWU();
+#endif
   modules.add(ZgatewayRTL_433);
 #endif
   THEENGS_LOG_TRACE(F("mqtt_max_payload_size: %d" CR), mqtt_max_payload_size);
@@ -2731,7 +2703,10 @@ void loop() {
       launchRTL_433Discovery(false);
 #  endif
 #endif
-  }
+#ifdef ZgatewayWU
+    WUtoMQTT();
+#endif
+}
   // Empty the queue
   emptyQueue();
   // Sleep if ready
