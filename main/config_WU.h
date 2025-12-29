@@ -1,8 +1,6 @@
 /*
   OpenMQTTGateway - Weather Underground Configuration
-
   Copyright: (c)
-
   This file is part of OpenMQTTGateway.
 */
 #ifndef config_WU_h
@@ -12,24 +10,35 @@
 
 extern void setupWU();
 extern void WUtoMQTT();
-extern void MQTTtoWU(char* topicOri, ArduinoJson::JsonObject& WUdata);
+extern void MQTTtoWU(char* topicOri, JsonObject& WUdata);
 
 /*----------------------------USER PARAMETERS-----------------------------*/
 /*-------------DEFINE YOUR WEATHER UNDERGROUND CREDENTIALS----------------*/
 
-#ifndef WU_STATION_ID
-#  define WU_STATION_ID "KTXANNA129" // Replace with your station ID
+// Iris 5-in-1 Station
+#ifndef WU_STATION_ID_IRIS
+#  define WU_STATION_ID_IRIS "KTXANNA130"
 #endif
 
-#ifndef WU_API_KEY
-# define WU_API_KEY "Q0HqPJed" // Replace with your API key
+#ifndef WU_API_KEY_IRIS
+#  define WU_API_KEY_IRIS "P0iG2Nku"
 #endif
 
-#ifndef WU_UPLOAD_INTERVAL
-# define WU_UPLOAD_INTERVAL 300000 // Upload every 5 minutes (milliseconds)
+#ifndef WU_UPLOAD_INTERVAL_IRIS
+#  define WU_UPLOAD_INTERVAL_IRIS 120000 // 2 minutes
 #endif
 
-/*-------------------PLACEHOLDERS FOR STATUS REPORTING--------------------*/
-// You can add MQTT status topics here if desired
+// Remote Sensor Station  
+#ifndef WU_STATION_ID_REMOTE
+#  define WU_STATION_ID_REMOTE "KTXANNA131"
+#endif
+
+#ifndef WU_API_KEY_REMOTE
+#  define WU_API_KEY_REMOTE "DkKnjpYa"
+#endif
+
+#ifndef WU_UPLOAD_INTERVAL_REMOTE
+#  define WU_UPLOAD_INTERVAL_REMOTE 300000 // 5 minutes
+#endif
 
 #endif
